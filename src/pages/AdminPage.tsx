@@ -7,7 +7,7 @@ import { SettingsPanel } from '../components/admin/SettingsPanel';
 
 export const AdminPage: React.FC<AdminPageProps> = ({ darkMode }) => {
   const { isAuthenticated, username, password, setUsername, setPassword, login, logout } = useAdminAuth();
-  const { topupEnabled, toggleTopup, wartitleEnabled, toggleWartitle } = useAdminSettings();
+  const { topupEnabled, toggleTopup, wartitleEnabled, toggleWartitle, loading } = useAdminSettings();
   const [loginError, setLoginError] = useState('');
 
   const handleLogin = () => {
@@ -39,6 +39,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ darkMode }) => {
       wartitleEnabled={wartitleEnabled}
       onToggleWartitle={toggleWartitle}
       onLogout={logout}
+      loading={loading}
     />
   );
 };

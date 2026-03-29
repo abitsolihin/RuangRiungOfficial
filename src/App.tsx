@@ -4,7 +4,8 @@ import { cn } from './utils/cn';
 import { TopupPage } from './pages/topupPage';
 import { WarTitlePage } from './pages/warTitlePage';
 import { AdminPage } from './pages/AdminPage';
-import { getTopupStatus, getWartitleStatus } from './hooks/useAdminSettings';
+import { getAdminSettings } from './services/googleSheets.service';
+import { STORAGE_KEYS } from './constants/admin.constants';
 
 
 // Icons
@@ -85,6 +86,8 @@ export function App() {
   const [darkMode, setDarkMode] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [topupEnabled, setTopupEnabled] = useState(true);
+  const [wartitleEnabled, setWartitleEnabled] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -104,6 +107,30 @@ export function App() {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    // Load settings dari Google Sheets
+    const loadSettings = async () => {
+      const settings = await getAdminSettings();
+      if (settings) {
+        setTopupEnabled(settings.topup);
+        setWartitleEnabled(settings.wartitle);
+        localStorage.setItem(STORAGE_KEYS.TOPUP_ENABLED, String(settings.topup));
+        localStorage.setItem(STORAGE_KEYS.WARTITLE_ENABLED, String(settings.wartitle));
+      } else {
+        // Fallback ke localStorage
+        const savedTopup = localStorage.getItem(STORAGE_KEYS.TOPUP_ENABLED);
+        const savedWartitle = localStorage.getItem(STORAGE_KEYS.WARTITLE_ENABLED);
+        setTopupEnabled(savedTopup === null ? true : savedTopup === 'true');
+        setWartitleEnabled(savedWartitle === null ? true : savedWartitle === 'true');
+      }
+    };
+    
+    loadSettings();
+    // Refresh settings setiap 30 detik
+    const interval = setInterval(loadSettings, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const toggleDarkMode = () => setDarkMode(!darkMode);
@@ -294,7 +321,7 @@ export function App() {
       {currentPage === 'home' ? (
         <HomePage darkMode={darkMode} navigateTo={navigateTo} mapFeatures={mapFeatures} />
       ) : currentPage === 'topup' ? (
-        getTopupStatus() ? (
+        topupEnabled ? (
           <TopupPage 
             darkMode={darkMode} 
             formatPrice={formatPrice}
@@ -319,7 +346,7 @@ export function App() {
           </div>
         )
       ) : currentPage === 'wartitle' ? (
-        getWartitleStatus() ? (
+        wartitleEnabled ? (
           <WarTitlePage darkMode={darkMode} />
         ) : (
           <div className="min-h-screen flex items-center justify-center p-4">
